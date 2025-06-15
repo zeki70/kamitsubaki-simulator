@@ -1,206 +1,487 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>KAMITSUBAKI CARD GAME 一人回し用シミュレーター</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
     <div id="game-container">
-        <!-- パスワード認証画面 -->
-        <div id="password-screen" class="screen">
-            <h1>KAMITSUBAKI CARD GAME</h1>
-            <h2>アクセス認証</h2>
-            <p>パスワードを入力してください</p>
-            <div class="password-input-container">
-                <input type="password" id="password-input" placeholder="パスワードを入力">
-                <button id="password-submit-btn">認証</button>
-            </div>
-            <div id="password-error" class="error-message" style="display: none;">
-                パスワードが正しくありません
-            </div>
+      <!-- パスワード認証画面 -->
+      <div id="password-screen" class="screen">
+        <h1>KAMITSUBAKI CARD GAME</h1>
+        <h2>アクセス認証</h2>
+        <p>パスワードを入力してください</p>
+        <div class="password-input-container">
+          <input
+            type="password"
+            id="password-input"
+            placeholder="パスワードを入力"
+          />
+          <button id="password-submit-btn">認証</button>
         </div>
-          <div id="deck-input-screen" class="screen">
-            <h1>KAMITSUBAKI CARD GAME</h1>
-            <div id="deck-input-mode-selection">
-                <button id="single-deck-mode-btn" class="mode-btn active">1デッキモード</button>
-                <button id="dual-deck-mode-btn" class="mode-btn">2デッキ対戦モード</button>
+        <div id="password-error" class="error-message" style="display: none">
+          パスワードが正しくありません
+        </div>
+      </div>
+      <div id="deck-input-screen" class="screen">
+        <h1>KAMITSUBAKI CARD GAME</h1>
+        <div id="deck-input-mode-selection">
+          <button id="single-deck-mode-btn" class="mode-btn active">
+            1デッキモード
+          </button>
+          <button id="dual-deck-mode-btn" class="mode-btn">
+            2デッキ対戦モード
+          </button>
+        </div>
+        <div id="single-deck-input" class="deck-input-section">
+          <p>デッキリストを / 区切りで入力してください</p>
+          <textarea
+            id="deck-string"
+            placeholder="例: AA-01/AA-01/AA-02/..."
+          ></textarea>
+          <button id="clear-deck-btn" class="clear-btn">クリア</button>
+        </div>
+
+        <div
+          id="dual-deck-input"
+          class="deck-input-section"
+          style="display: none"
+        >
+          <div class="deck-input-group">
+            <h3>プレイヤー1のデッキ</h3>
+            <textarea
+              id="deck-string-p1"
+              placeholder="例: AA-01/AA-01/AA-02/..."
+            ></textarea>
+            <button id="clear-deck-p1-btn" class="clear-btn">クリア</button>
+          </div>
+          <div class="deck-input-group">
+            <h3>プレイヤー2のデッキ</h3>
+            <textarea
+              id="deck-string-p2"
+              placeholder="例: BA-01/BA-01/BA-02/..."
+            ></textarea>
+            <button id="clear-deck-p2-btn" class="clear-btn">クリア</button>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button id="start-game-btn">ゲーム開始</button>
+          <button id="fullscreen-btn">全画面表示</button>
+        </div>
+      </div>
+      <div id="game-board" class="screen">
+        <!-- 相手の盤面全画面表示 -->
+        <div id="opponent-fullscreen" style="display: none">
+          <div class="opponent-fullscreen-content">
+            <div id="opponent-fullscreen-board">
+              <!-- 相手の盤面がJavaScriptで動的に生成されます -->
             </div>
-              <div id="single-deck-input" class="deck-input-section">
-                <p>デッキリストを / 区切りで入力してください</p>
-                <textarea id="deck-string" placeholder="例: AA-01/AA-01/AA-02/..."></textarea>
-                <button id="clear-deck-btn" class="clear-btn">クリア</button>
+          </div>
+        </div>
+
+        <div id="board-content">
+          <!-- New wrapper -->
+          <div id="main-area">
+            <div id="left-column">
+              <div
+                id="volNoise-zone"
+                class="zone pile-zone drop-zone"
+                data-zone-id="volNoise"
+              >
+                <div class="zone-title">VOLノイズ</div>
+              </div>
+              <button id="view-opponent-btn" style="display: none">対面</button>
+              <button id="open-temporary-zone-btn">テンポラリー</button>
+              <button id="fullscreen-mobile-btn" class="fullscreen-mobile-btn">
+                全画面表示
+              </button>
+              <div
+                id="trash-zone"
+                class="zone pile-zone drop-zone"
+                data-zone-id="trash"
+              >
+                <div class="zone-title">トラッシュ</div>
+              </div>
             </div>
-            
-            <div id="dual-deck-input" class="deck-input-section" style="display: none;">
-                <div class="deck-input-group">
-                    <h3>プレイヤー1のデッキ</h3>
-                    <textarea id="deck-string-p1" placeholder="例: AA-01/AA-01/AA-02/..."></textarea>
-                    <button id="clear-deck-p1-btn" class="clear-btn">クリア</button>
+            <div id="center-column">
+              <div id="stage-zone" class="zone">
+                <div class="zone-title">ステージ</div>
+                <div class="stage-column">
+                  <button class="change-stage-btn" data-column-index="0">
+                    チェンジ
+                  </button>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="0"
+                    data-slot-color="green"
+                  ></div>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="0"
+                    data-slot-color="blue"
+                  ></div>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="0"
+                    data-slot-color="red"
+                  ></div>
                 </div>
-                <div class="deck-input-group">
-                    <h3>プレイヤー2のデッキ</h3>
-                    <textarea id="deck-string-p2" placeholder="例: BA-01/BA-01/BA-02/..."></textarea>
-                    <button id="clear-deck-p2-btn" class="clear-btn">クリア</button>
-                </div>            </div>
-            
-            <div class="button-group">
-                <button id="start-game-btn">ゲーム開始</button>
-                <button id="fullscreen-btn">全画面表示</button>
-            </div>
-        </div>        <div id="game-board" class="screen">            <!-- 相手の盤面全画面表示 -->
-            <div id="opponent-fullscreen" style="display: none;">
-                <div class="opponent-fullscreen-content">
-                    <div id="opponent-fullscreen-board">
-                        <!-- 相手の盤面がJavaScriptで動的に生成されます -->
-                    </div>
+                <div class="stage-column">
+                  <button class="change-stage-btn" data-column-index="1">
+                    チェンジ
+                  </button>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="1"
+                    data-slot-color="green"
+                  ></div>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="1"
+                    data-slot-color="blue"
+                  ></div>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="1"
+                    data-slot-color="red"
+                  ></div>
                 </div>
-            </div>
-            
-            <div id="board-content"> <!-- New wrapper -->
-                <div id="main-area">                    <div id="left-column">
-                        <div id="volNoise-zone" class="zone pile-zone drop-zone" data-zone-id="volNoise"><div class="zone-title">VOLノイズ</div></div>
-                        <button id="view-opponent-btn" style="display: none;">対面</button>
-                        <button id="open-temporary-zone-btn">テンポラリー</button>
-                        <button id="fullscreen-mobile-btn" class="fullscreen-mobile-btn">全画面表示</button>
-                        <div id="trash-zone" class="zone pile-zone drop-zone" data-zone-id="trash"><div class="zone-title">トラッシュ</div></div>
-                    </div>
-                    <div id="center-column">
-                        <div id="stage-zone" class="zone">
-                            <div class="zone-title">ステージ</div>
-                            <div class="stage-column">
-                                <button class="change-stage-btn" data-column-index="0">チェンジ</button>
-                                <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="red"></div>
-                            </div>
-                            <div class="stage-column">
-                                <button class="change-stage-btn" data-column-index="1">チェンジ</button>
-                                <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="red"></div>
-                            </div>
-                            <div class="stage-column">
-                                <button class="change-stage-btn" data-column-index="2">チェンジ</button>
-                                <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="red"></div>
-                            </div>
-                            <div class="stage-column">
-                                <button class="change-stage-btn" data-column-index="3">チェンジ</button>
-                                <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="red"></div>
-                            </div>
-                            <div class="stage-column">
-                                <button class="change-stage-btn" data-column-index="4">チェンジ</button>
-                                <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="red"></div>
-                            </div>
-                        </div>
-                        <div id="direction-zone" class="zone">
-                            <div class="zone-title">Direction</div>
-                            <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="0"></div>
-                            <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="1"></div>
-                            <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="2"></div>
-                            <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="3"></div>
-                            <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="4"></div>
-                        </div>
-                    </div>
-                    <div id="right-column">
-                        <div class="right-inner">                            <div class="buttons-deck-wrapper" style="display:flex; flex-direction:column; align-items:center; gap:5px;">
-                                <button id="change-mat-btn">プレイマット</button>
-                                <button id="shuffle-btn" class="action-btn">山札シャッフル</button>
-                                <button id="search-deck-btn" class="action-btn">山札からサーチ</button>
-                                <button id="search-volnoise-btn" class="action-btn">VOLノイズからサーチ</button>                                <button id="move-hand-to-trash-btn" class="action-btn">手札を全てトラッシュ</button>                                <button id="mulligan-btn" class="action-btn">マリガン</button>
-                                <button id="reset-btn" class="action-btn">リセット</button>
-                                <button id="switch-player-btn" class="action-btn" style="display: none;">プレイヤー切り替え</button>
-                                <button id="turn-end-btn" class="action-btn">ターンエンド</button>
-                                <button id="roll-dice-btn" class="action-btn">ダイスを振る</button><button id="draw-bottom-deck-btn" class="action-btn">山札の下から1枚ドロー</button>
-                                <button id="sort-hand-btn" class="action-btn">ソート</button> <!-- Moved here -->
-                                <!-- 山札ゾーンとドローボタンを新しいdivでラップ -->
-                                <div class="deck-group">
-                                    <div id="deck-zone" class="zone pile-zone drop-zone" data-zone-id="deck"><div class="zone-title">山札</div></div>
-                                    <!-- 山札の下から1枚ドローボタンは上に移動 -->
-                                </div>
-                            </div>
-                            <!-- カウンター群はここから移動 -->
-                        </div>
-                    </div>
+                <div class="stage-column">
+                  <button class="change-stage-btn" data-column-index="2">
+                    チェンジ
+                  </button>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="2"
+                    data-slot-color="green"
+                  ></div>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="2"
+                    data-slot-color="blue"
+                  ></div>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="2"
+                    data-slot-color="red"
+                  ></div>
                 </div>
-                <div id="counters-column-wrapper"> <!-- New column for counters -->
-                    <div class="counters-group">
-                        <div class="counter">
-                            <img src="item/vol.png" alt="VOL" class="counter-icon">
-                            <div class="counter-value-controls">
-                                <button class="counter-btn" data-counter="vol" data-amount="-1">-</button>
-                                <span id="vol-value" class="counter-value">0</span>
-                                <button class="counter-btn" data-counter="vol" data-amount="1">+</button>
-                            </div>
-                        </div>
-                        <div class="counter">
-                            <img src="item/alpha.png" alt="Alpha" class="counter-icon">
-                            <div class="counter-value-controls">
-                                <button class="counter-btn" data-counter="manaAlpha" data-amount="-1">-</button>
-                                <span id="mana-alpha-value" class="counter-value">0</span>
-                                <button class="counter-btn" data-counter="manaAlpha" data-amount="1">+</button>
-                            </div>
-                        </div>
-                        <div class="counter">
-                            <img src="item/beta.png" alt="Beta" class="counter-icon">
-                            <div class="counter-value-controls">
-                                <button class="counter-btn" data-counter="manaBeta" data-amount="-1">-</button>
-                                <span id="mana-beta-value" class="counter-value">0</span>
-                                <button class="counter-btn" data-counter="manaBeta" data-amount="1">+</button>
-                            </div>
-                        </div>
-                        <div class="counter">
-                            <img src="item/omega.png" alt="Omega" class="counter-icon">
-                            <div class="counter-value-controls">
-                                <button class="counter-btn" data-counter="manaOmega" data-amount="-1">-</button>
-                                <span id="mana-omega-value" class="counter-value">0</span>
-                                <button class="counter-btn" data-counter="manaOmega" data-amount="1">+</button>
-                            </div>
-                        </div>
-                        <div class="counter">
-                            <div class="counter-label" style="font-size: 1.4rem; margin-bottom: 3px;">ターン</div>
-                            <div class="counter-value-controls">
-                                <button class="counter-btn" data-counter="turn" data-amount="-1">-</button>
-                                <span id="turn-value" class="counter-value">1</span>
-                                <button class="counter-btn" data-counter="turn" data-amount="1">+</button>
-                            </div>
-                        </div>
-                    </div>
+                <div class="stage-column">
+                  <button class="change-stage-btn" data-column-index="3">
+                    チェンジ
+                  </button>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="3"
+                    data-slot-color="green"
+                  ></div>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="3"
+                    data-slot-color="blue"
+                  ></div>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="3"
+                    data-slot-color="red"
+                  ></div>
                 </div>
+                <div class="stage-column">
+                  <button class="change-stage-btn" data-column-index="4">
+                    チェンジ
+                  </button>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="4"
+                    data-slot-color="green"
+                  ></div>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="4"
+                    data-slot-color="blue"
+                  ></div>
+                  <div
+                    class="card-slot drop-zone"
+                    data-zone-id="stage"
+                    data-slot-index="4"
+                    data-slot-color="red"
+                  ></div>
+                </div>
+              </div>
+              <div id="direction-zone" class="zone">
+                <div class="zone-title">Direction</div>
+                <div
+                  class="card-slot drop-zone"
+                  data-zone-id="direction"
+                  data-slot-index="0"
+                ></div>
+                <div
+                  class="card-slot drop-zone"
+                  data-zone-id="direction"
+                  data-slot-index="1"
+                ></div>
+                <div
+                  class="card-slot drop-zone"
+                  data-zone-id="direction"
+                  data-slot-index="2"
+                ></div>
+                <div
+                  class="card-slot drop-zone"
+                  data-zone-id="direction"
+                  data-slot-index="3"
+                ></div>
+                <div
+                  class="card-slot drop-zone"
+                  data-zone-id="direction"
+                  data-slot-index="4"
+                ></div>
+              </div>
             </div>
-            <div id="hand-zone" class="zone drop-zone" data-zone-id="hand">
-                <!-- 手札ソートボタンは上記に移動 -->
+            <div id="right-column">
+              <div class="right-inner">
+                <div
+                  class="buttons-deck-wrapper"
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 5px;
+                  "
+                >
+                  <button id="change-mat-btn">プレイマット</button>
+                  <button id="shuffle-btn" class="action-btn">
+                    山札シャッフル
+                  </button>
+                  <button id="search-deck-btn" class="action-btn">
+                    山札からサーチ
+                  </button>
+                  <button id="search-volnoise-btn" class="action-btn">
+                    VOLノイズからサーチ
+                  </button>
+                  <button id="move-hand-to-trash-btn" class="action-btn">
+                    手札を全てトラッシュ
+                  </button>
+                  <button id="mulligan-btn" class="action-btn">マリガン</button>
+                  <button id="reset-btn" class="action-btn">リセット</button>
+                  <button
+                    id="switch-player-btn"
+                    class="action-btn"
+                    style="display: none"
+                  >
+                    プレイヤー切り替え
+                  </button>
+                  <button id="turn-end-btn" class="action-btn">
+                    ターンエンド
+                  </button>
+                  <button id="roll-dice-btn" class="action-btn">
+                    ダイスを振る</button
+                  ><button id="draw-bottom-deck-btn" class="action-btn">
+                    山札の下から1枚ドロー
+                  </button>
+                  <button id="sort-hand-btn" class="action-btn">ソート</button>
+                  <!-- Moved here -->
+                  <!-- 山札ゾーンとドローボタンを新しいdivでラップ -->
+                  <div class="deck-group">
+                    <div
+                      id="deck-zone"
+                      class="zone pile-zone drop-zone"
+                      data-zone-id="deck"
+                    >
+                      <div class="zone-title">山札</div>
+                    </div>
+                    <!-- 山札の下から1枚ドローボタンは上に移動 -->
+                  </div>
+                </div>
+                <!-- カウンター群はここから移動 -->
+              </div>
             </div>
-            <div id="dice-container"></div>        </div>
-        <div id="shuffle-message">SHUFFLE</div>
-        <div id="turn-end-message">TURN END</div>
+          </div>
+          <div id="counters-column-wrapper">
+            <!-- New column for counters -->
+            <div class="counters-group">
+              <div class="counter">
+                <img src="item/vol.png" alt="VOL" class="counter-icon" />
+                <div class="counter-value-controls">
+                  <button
+                    class="counter-btn"
+                    data-counter="vol"
+                    data-amount="-1"
+                  >
+                    -
+                  </button>
+                  <span id="vol-value" class="counter-value">0</span>
+                  <button
+                    class="counter-btn"
+                    data-counter="vol"
+                    data-amount="1"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <div class="counter">
+                <img src="item/alpha.png" alt="Alpha" class="counter-icon" />
+                <div class="counter-value-controls">
+                  <button
+                    class="counter-btn"
+                    data-counter="manaAlpha"
+                    data-amount="-1"
+                  >
+                    -
+                  </button>
+                  <span id="mana-alpha-value" class="counter-value">0</span>
+                  <button
+                    class="counter-btn"
+                    data-counter="manaAlpha"
+                    data-amount="1"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <div class="counter">
+                <img src="item/beta.png" alt="Beta" class="counter-icon" />
+                <div class="counter-value-controls">
+                  <button
+                    class="counter-btn"
+                    data-counter="manaBeta"
+                    data-amount="-1"
+                  >
+                    -
+                  </button>
+                  <span id="mana-beta-value" class="counter-value">0</span>
+                  <button
+                    class="counter-btn"
+                    data-counter="manaBeta"
+                    data-amount="1"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <div class="counter">
+                <img src="item/omega.png" alt="Omega" class="counter-icon" />
+                <div class="counter-value-controls">
+                  <button
+                    class="counter-btn"
+                    data-counter="manaOmega"
+                    data-amount="-1"
+                  >
+                    -
+                  </button>
+                  <span id="mana-omega-value" class="counter-value">0</span>
+                  <button
+                    class="counter-btn"
+                    data-counter="manaOmega"
+                    data-amount="1"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <div class="counter">
+                <div
+                  class="counter-label"
+                  style="font-size: 1.4rem; margin-bottom: 3px"
+                >
+                  ターン
+                </div>
+                <div class="counter-value-controls">
+                  <button
+                    class="counter-btn"
+                    data-counter="turn"
+                    data-amount="-1"
+                  >
+                    -
+                  </button>
+                  <span id="turn-value" class="counter-value">1</span>
+                  <button
+                    class="counter-btn"
+                    data-counter="turn"
+                    data-amount="1"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="hand-zone" class="zone drop-zone" data-zone-id="hand">
+          <!-- 手札ソートボタンは上記に移動 -->
+        </div>
+        <div id="dice-container"></div>
+      </div>
+      <div id="shuffle-message">SHUFFLE</div>
+      <div id="turn-end-message">TURN END</div>
     </div>
     <div id="trash-expanded-zone"></div>
     <div id="deck-expanded-zone"></div>
     <div id="volnoise-expanded-zone"></div>
-    <div id="temporary-expanded-zone" class="drop-zone" data-zone-id="temporary">
-        <div class="temporary-zone-controls">
-            <button id="temp-to-trash-btn">全てトラッシュへ</button>
-            <button id="temp-to-deck-shuffle-btn">山札に戻しシャッフル</button>
-            <button id="temp-to-deck-bottom-btn">山札の下へ</button>
-            <button id="temp-hand-to-temporary-btn">手札を全てここへ</button>
-        </div>
-        <div class="temporary-zone-card-area drop-zone" data-zone-id="temporary">
-            {/* カードはここにレンダリングされる */}
-        </div>
-    </div>    <div id="card-zoom-overlay">
-        <div id="zoomed-card-image"></div>
+    <div
+      id="temporary-expanded-zone"
+      class="drop-zone"
+      data-zone-id="temporary"
+    >
+      <div class="temporary-zone-controls">
+        <button id="temp-to-trash-btn">全てトラッシュへ</button>
+        <button id="temp-to-deck-shuffle-btn">山札に戻しシャッフル</button>
+        <button id="temp-to-deck-bottom-btn">山札の下へ</button>
+        <button id="temp-hand-to-temporary-btn">手札を全てここへ</button>
+      </div>
+      <div class="temporary-zone-card-area drop-zone" data-zone-id="temporary">
+        {/* カードはここにレンダリングされる */}
+      </div>
     </div>
-    
+    <div id="card-zoom-overlay">
+      <div id="zoomed-card-image"></div>
+    </div>
+
     <!-- リセット確認ポップアップ -->
     <div id="reset-popup-overlay" class="popup-overlay">
-        <div id="reset-popup" class="popup">
-            <h3>ゲームをリセットしますか？</h3>            <div class="popup-buttons">
-                <button id="reset-to-deck-select" class="popup-btn reset-primary">デッキ選択画面に戻る</button>
-                <button id="reset-same-deck" class="popup-btn reset-secondary">同じデッキでもう一度</button>
-                <button id="reset-swap-players" class="popup-btn reset-secondary" style="display: none;">先後を入れ替えてもう一度</button>
-                <button id="reset-cancel" class="popup-btn reset-cancel">キャンセル</button>
-            </div>
+      <div id="reset-popup" class="popup">
+        <h3>ゲームをリセットしますか？</h3>
+        <div class="popup-buttons">
+          <button id="reset-to-deck-select" class="popup-btn reset-primary">
+            デッキ選択画面に戻る
+          </button>
+          <button id="reset-same-deck" class="popup-btn reset-secondary">
+            同じデッキでもう一度
+          </button>
+          <button
+            id="reset-swap-players"
+            class="popup-btn reset-secondary"
+            style="display: none"
+          >
+            先後を入れ替えてもう一度
+          </button>
+          <button id="reset-cancel" class="popup-btn reset-cancel">
+            キャンセル
+          </button>
         </div>
+      </div>
     </div>
-    
+
     <script src="script.js"></script>
-</body>
+  </body>
 </html>
