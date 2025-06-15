@@ -294,13 +294,12 @@
                     ターンエンド
                   </button>
                   <button id="roll-dice-btn" class="action-btn">
-                    ダイスを振る</button
-                  ><button id="draw-bottom-deck-btn" class="action-btn">
+                    ダイスを振る
+                  </button>
+                  <button id="draw-bottom-deck-btn" class="action-btn">
                     山札の下から1枚ドロー
                   </button>
                   <button id="sort-hand-btn" class="action-btn">ソート</button>
-                  <!-- Moved here -->
-                  <!-- 山札ゾーンとドローボタンを新しいdivでラップ -->
                   <div class="deck-group">
                     <div
                       id="deck-zone"
@@ -309,7 +308,6 @@
                     >
                       <div class="zone-title">山札</div>
                     </div>
-                    <!-- 山札の下から1枚ドローボタンは上に移動 -->
                   </div>
                 </div>
                 <!-- カウンター群はここから移動 -->
@@ -449,9 +447,10 @@
         <button id="temp-to-deck-bottom-btn">山札の下へ</button>
         <button id="temp-hand-to-temporary-btn">手札を全てここへ</button>
       </div>
-      <div class="temporary-zone-card-area drop-zone" data-zone-id="temporary">
-        {/* カードはここにレンダリングされる */}
-      </div>
+      <div
+        class="temporary-zone-card-area drop-zone"
+        data-zone-id="temporary"
+      ></div>
     </div>
     <div id="card-zoom-overlay">
       <div id="zoomed-card-image"></div>

@@ -10,13 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   let gameState = {};
   const CARD_IMAGE_PATH = "./Cards/";
-  const DOUBLE_TAP_THRESHOLD = 300;
-  const LONG_PRESS_DELAY = 500; // 長押しとみなすまでの時間（ミリ秒）
-  // ここから下は変更なし
-  let lastTapTime = 0;
-  let lastTapTargetCardId = null;
-  let longPressTimer = null; // 長押しタイマーのIDを保持
-  let selectedChangeColumns = []; // 選択されたステージ列のインデックスを保持
+  const LONG_PRESS_DELAY = 500;
+  let longPressTimer = null;
+  let selectedChangeColumns = [];
 
   function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -32,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
       shuffleMessageEl.style.display = "block";
       setTimeout(() => {
         shuffleMessageEl.style.display = "none";
-      }, 500); // 0.5秒後に非表示
+      }, 500);
     }
   }
 
@@ -42,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
       turnEndMessageEl.style.display = "block";
       setTimeout(() => {
         turnEndMessageEl.style.display = "none";
-      }, 1000); // 1秒後に非表示
+      }, 1000);
     }
   }
 
@@ -147,41 +143,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const zoneData = gameState.zones[zoneId];
       if (zoneData) {
-        // if (zoneId === 'volNoise') { // VOLノイズゾーンの処理開始ログ (必要に応じてコメント解除)
-        //     console.log(`[RenderAll] Processing volNoise zone. Card count: ${zoneData.length}`);
-        // }
         if (zoneData.length > 0) {
-          // パイルの一番上のカードIDを取得 (gameState.zonesの各パイルはカードID文字列の配列を想定)
           const topCardDisplayId = zoneData.slice(-1)[0];
-          // if (zoneId === 'volNoise') console.log(`[RenderAll] volNoise has cards. Top card for display (should be back): ${topCardDisplayId}`);
           zoneEl.appendChild(
             createCardElement(topCardDisplayId, false, zoneId, "none")
           );
         }
-        // else { // カードがない場合は、以前はプレースホルダーを表示していたが、何も表示しないように変更
-        // zoneEl.appendChild(createCardElement(null, false, zoneId, 'none'));
-        // }
         const countEl = document.createElement("span");
         countEl.className = "zone-count";
         countEl.textContent = zoneData.length;
         zoneEl.appendChild(countEl);
-
-        // if (zoneId === 'volNoise') { // VOLノイズゾーンの処理完了後、中身を確認 (必要に応じてコメント解除)
-        //     console.log(`[RenderAll] volNoise-zone innerHTML after append:`, zoneEl.innerHTML);
-        //     const cardInVolNoise = zoneEl.querySelector('.card');
-        //     if (cardInVolNoise) {
-        //         console.log('[RenderAll] volNoise-zone .card style:', cardInVolNoise.style.backgroundImage);
-        //     } else {
-        //         console.log('[RenderAll] volNoise-zone .card not found after append.');                // }
-      } else {
-        console.warn(`[RenderAll] gameState.zones.${zoneId} is undefined.`);
       }
     });
 
     // Render hand
     const handZone = document.getElementById("hand-zone");
-    // handZone.innerHTML = ''; // この行をコメントアウトまたは削除
-    // 手札ゾーン内の既存のカード要素のみを削除
     handZone.querySelectorAll(".card").forEach((cardEl) => cardEl.remove());
     gameState.zones.hand.forEach((cardId) => {
       handZone.appendChild(createCardElement(cardId, false, "hand", "drag"));
@@ -345,35 +321,18 @@ document.addEventListener("DOMContentLoaded", () => {
       typeof cardId === "object" && cardId !== null ? cardId.cardId : cardId;
     cardEl.dataset.cardId = actualCardId;
 
-    // if (zoneId === 'volNoise' && interactiveType === 'none') { // 必要に応じてコメント解除
-    //     console.log(`[CreateCardElement] For volNoise pile. actualCardId: "${actualCardId}", interactiveType: ${interactiveType}`);
-    // }
-    // デバッグログ: トラッシュのパイル表示時にactualCardIdを確認
-    if (zoneId === "trash" && interactiveType === "none") {
-      // console.log(`[CreateCardElement] Rendering trash pile card. actualCardId: "${actualCardId}", type: ${typeof actualCardId}`);
-    }
-
     if (
       (zoneId === "deck" || zoneId === "volNoise") &&
       interactiveType === "none"
     ) {
-      // 山札またはVOLノイズのパイル表示のみ裏面
       cardEl.style.backgroundImage = `url('item/back.png')`;
-      // if (zoneId === 'volNoise') console.log('[CreateCardElement] volNoise: Set back.png (condition: deck/volNoise pile)');
     } else if (
       actualCardId &&
       typeof actualCardId === "string" &&
       actualCardId.trim() !== ""
     ) {
-      // actualCardId が null でなく、空でない有効な文字列の場合のみ表面画像を設定
       cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${actualCardId}.png')`;
     } else {
-      // カードIDがない、または無効な場合（空のパイルゾーンのプレースホルダーや、actualCardIdが期待する文字列でない場合など）は裏面を表示
-      // if (zoneId === 'volNoise') console.log('[CreateCardElement] volNoise: Set back.png (condition: else - invalid actualCardId or not deck/volNoise pile)');
-      if (interactiveType === "none" && zoneId === "trash") {
-        // トラッシュのパイル表示でactualCardIdが無効だった場合
-        // console.warn(`[CreateCardElement] Trash pile: actualCardId "${actualCardId}" was invalid or empty. Displaying back.png.`);
-      }
       cardEl.style.backgroundImage = `url('item/back.png')`;
     }
 
@@ -450,11 +409,8 @@ document.addEventListener("DOMContentLoaded", () => {
       sourceInfo.zoneId = "temporary";
     }
     if (!draggedCardData && !isPile) {
-      // パイルでない場合、カードデータがなければ終了
-      // console.log("No dragged card data for non-pile, exiting press start.");
       return;
     }
-    // パイルの場合、draggedCardDataは上で設定されているか、空ならreturn済み
 
     const touch = e.touches ? e.touches[0] : e;
     const rect = element.getBoundingClientRect();
@@ -467,10 +423,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let startX = touch.clientX;
     let startY = touch.clientY;
 
-    let longPressActionCompleted = false; // 長押しによる拡大表示が完了したかを示すフラグ
+    let longPressActionCompleted = false;
 
-    // 長押しタイマーを開始
-    clearTimeout(longPressTimer); // 既存のタイマーがあればクリア
+    clearTimeout(longPressTimer);
     longPressTimer = setTimeout(() => {
       if (!isDragging && element.classList.contains("card") && !isPile) {
         const cardIdToZoom = element.dataset.cardId;
@@ -479,10 +434,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (cardIdToZoom && cardZoomOverlay && zoomedCardImage) {
           zoomedCardImage.style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardIdToZoom}.png')`;
           cardZoomOverlay.style.display = "flex";
-          longPressActionCompleted = true; // 長押しアクションが完了したことをマーク
+          longPressActionCompleted = true;
         }
       }
-      longPressTimer = null; // タイマー実行後はクリア
+      longPressTimer = null;
     }, LONG_PRESS_DELAY);
 
     const onMove = (moveEvent) => {
@@ -491,29 +446,22 @@ document.addEventListener("DOMContentLoaded", () => {
       const moveY = (moveEvent.touches ? moveEvent.touches[0] : moveEvent)
         .clientY;
       if (Math.abs(moveX - startX) > 5 || Math.abs(moveY - startY) > 5) {
-        // 少しでも動いたら
         if (longPressTimer) {
-          // タイマーがまだ作動していればクリア
           clearTimeout(longPressTimer);
           longPressTimer = null;
         }
-        // longPressActionCompleted はタイマーが発動しなければ false のまま
         const cardZoomOverlay = document.getElementById("card-zoom-overlay");
         if (cardZoomOverlay.style.display === "flex") {
-          cardZoomOverlay.style.display = "none"; // 拡大表示もキャンセル
+          cardZoomOverlay.style.display = "none";
         }
 
         if (!isDragging) {
-          // ドラッグ開始の処理
           isDragging = true;
-          if (!isPile && element) element.style.opacity = "0.5"; // elementが存在する場合のみ
-          // draggedCardData がこの時点で必要
+          if (!isPile && element) element.style.opacity = "0.5";
           if (draggedCardData) {
-            // draggedCardData が有効な場合のみビジュアルを作成
             draggedCardVisual = document.createElement("div");
             draggedCardVisual.className = "card dragging";
 
-            // 山札からのドラッグの場合は裏面を表示
             if (isPile && sourceInfo.zoneId === "deck") {
               draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`;
             } else {
@@ -523,9 +471,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (draggedCardData.isStandby)
               draggedCardVisual.style.transform = "rotate(90deg)";
             document.body.appendChild(draggedCardVisual);
-          } else if (isPile) {
-            // パイルからのドラッグの場合、draggedCardDataは最初に設定されているはず
-            // もし空のパイルなら、そもそもここまで来ない (最初のifでreturn)
           }
         }
       }
@@ -537,12 +482,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const onEnd = (endEvent) => {
       if (longPressTimer) {
-        // タイマーがまだ作動していれば（つまり、長押し完了前に終了した場合）
         clearTimeout(longPressTimer);
         longPressTimer = null;
-        // longPressActionCompleted は false のまま
       }
-      // longPressTimerがnullでも、longPressActionCompletedがtrueなら長押しが完了している
 
       const cardZoomOverlay = document.getElementById("card-zoom-overlay");
       if (cardZoomOverlay.style.display === "flex") {
@@ -579,10 +521,8 @@ document.addEventListener("DOMContentLoaded", () => {
           const targetTemporaryZone = targetEl
             ? targetEl.closest("#temporary-expanded-zone") ||
               targetEl.closest(".temporary-zone-card-area")
-            : null; // まず元の場所からカードを削除
+            : null;
           removeCardFromState(draggedCardData, sourceInfo);
-
-          // ドロップ先を判定してから移動処理を実行
           if (targetSlot) {
             const targetInfo = {
               zoneId: targetSlot.dataset.zoneId,
@@ -618,43 +558,37 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
           if (!dropped) {
-            // いずれのドロップ先でも成功しなかった場合、元の場所に戻す
             addCardToState(draggedCardData, sourceInfo);
           }
         }
-        if (draggedCardVisual) draggedCardVisual.style.display = "none"; // ドラッグ中のビジュアルを隠す
+        if (draggedCardVisual) draggedCardVisual.style.display = "none";
       } else {
-        // ドラッグでなければタップとして処理
-        // ただし、長押しアクションが完了した場合はタップ処理をスキップ
         if (!longPressActionCompleted) {
           if (isPile) {
-            handleTap(element, { zoneId: sourceInfo.zoneId }); // パイルゾーンのタップ
+            handleTap(element, { zoneId: sourceInfo.zoneId });
           } else {
-            handleTap(element, sourceInfo); // カードのタップ
+            handleTap(element, sourceInfo);
           }
         }
       }
-      // ドラッグビジュアルの確実な削除
+
       try {
         if (draggedCardVisual) {
           draggedCardVisual.remove();
           draggedCardVisual = null;
         }
       } catch (error) {
-        console.warn("[onEnd] Error removing drag visual:", error);
         draggedCardVisual = null;
       }
 
-      // 孤立したドラッグビジュアルの削除
       document.querySelectorAll(".card.dragging").forEach((el) => {
         try {
           el.remove();
         } catch (error) {
-          console.warn("[onEnd] Error removing orphaned drag visual:", error);
+          // Ignore errors
         }
       });
 
-      // ドラッグ状態のリセット
       isDragging = false;
       draggedCardData = null;
 
@@ -667,13 +601,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("touchend", onEnd);
   }
   function removeCardFromState(cardData, fromInfo) {
-    if (!cardData || !fromInfo) {
-      console.warn("[removeCardFromState] Invalid parameters:", {
-        cardData,
-        fromInfo,
-      });
-      return;
-    }
+    if (!cardData || !fromInfo) return;
     const zoneId = fromInfo.zoneId; // 'trash-expanded'からドラッグした場合、ここは'trash'になる
     const cardIdToRemove = cardData.cardId;
     let slotArray;
@@ -685,152 +613,87 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (slotArray && slotArray.length > 0) {
-      // direction or stage (these are arrays of objects like {cardId: "...", isStandby: ...})
-      // For these zones, we assume the dragged card is the one visually on top,
-      // which corresponds to the last element in the array.
       const topCardObject = slotArray[slotArray.length - 1];
       if (topCardObject.cardId === cardIdToRemove) {
         slotArray.pop();
-        // console.log(`[removeCardFromState] Successfully removed card ${cardIdToRemove} from ${zoneId}`);
-      } else {
-        console.warn(
-          `[removeCardFromState] Card mismatch in ${zoneId}. Expected: ${cardIdToRemove}, Found: ${topCardObject.cardId}`
-        );
       }
     } else if (zoneId !== "direction" && zoneId !== "stage") {
-      // hand, deck, trash, volNoise, temporary (these are arrays of cardId strings)
       const zone = gameState.zones[zoneId];
-      if (!zone) {
-        console.warn(`[removeCardFromState] Zone ${zoneId} not found`);
-        return;
-      }
+      if (!zone) return;
 
       if (zoneId === "deck" || zoneId === "volNoise") {
-        // Zones that should behave strictly as LIFO for drag operations
         if (zone.length > 0 && zone[zone.length - 1] === cardIdToRemove) {
           zone.pop();
-          // console.log(`[removeCardFromState] Successfully removed card ${cardIdToRemove} from ${zoneId} (LIFO)`);
         } else {
-          // This case might occur if the card dragged was not the top one, or zone became empty.
-          // Or if cardIdToRemove is somehow not matching the actual top card string.
-          // Fallback to indexOf, though this was the source of the original issue with duplicates.
-          // Proper logging helps understand if this path is taken unexpectedly.
-          console.warn(
-            `[removeCardFromState] ${zoneId} top card mismatch or zone empty. Card to remove: ${cardIdToRemove}. Actual top: ${
-              zone.length > 0 ? zone[zone.length - 1] : "N/A"
-            }. Falling back to indexOf search.`
-          );
           const index = zone.indexOf(cardIdToRemove);
           if (index > -1) {
             zone.splice(index, 1);
-            console.log(
-              `[removeCardFromState] Removed card ${cardIdToRemove} from ${zoneId} using indexOf`
-            );
-          } else {
-            console.error(
-              `[removeCardFromState] Failed to find card ${cardIdToRemove} in ${zoneId}`
-            );
           }
         }
       } else {
-        // For hand, trash, temporary: remove the specific card by ID using indexOf
         const index = zone.indexOf(cardIdToRemove);
         if (index > -1) {
           zone.splice(index, 1);
-          // console.log(`[removeCardFromState] Successfully removed card ${cardIdToRemove} from ${zoneId}`);
-        } else {
-          console.warn(
-            `[removeCardFromState] Card ${cardIdToRemove} not found in ${zoneId}`
-          );
         }
       }
     }
   }
   function addCardToState(cardData, toInfo) {
-    if (!cardData || !toInfo || !toInfo.zoneId) {
-      console.warn("[addCardToState] Invalid parameters:", {
-        cardData,
-        toInfo,
-      });
-      return false;
-    }
+    if (!cardData || !toInfo || !toInfo.zoneId) return false;
     const zoneId = toInfo.zoneId;
     const cardObject = { cardId: cardData.cardId, isStandby: false };
 
     if (zoneId === "direction") {
       if (toInfo.slotIndex !== undefined) {
-        // ディレクションスロットに既にカードがある場合は追加しない
         if (gameState.zones.direction[toInfo.slotIndex].length > 0) {
-          // console.log("Direction slot already full. Card not added.");
           return false;
         }
         gameState.zones.direction[toInfo.slotIndex].push(cardObject);
-        // console.log(`[addCardToState] Added card ${cardData.cardId} to direction slot ${toInfo.slotIndex}`);
         return true;
       }
-      return false; // slotIndex が undefined の場合
+      return false;
     } else if (zoneId === "stage") {
       if (toInfo.slotIndex !== undefined && toInfo.slotColor) {
         if (toInfo.slotColor === "blue") {
-          // 青スロットに既にカードがある場合は追加しない
           if (
             gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor].length > 0
           ) {
-            // console.log("Blue stage slot already full. Card not added.");
             return false;
           }
           cardObject.isStandby = true;
         }
-        // 他の色（green, red）のスロットや、空の青スロットへの追加
         gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor].push(
           cardObject
         );
-        // console.log(`[addCardToState] Added card ${cardData.cardId} to stage slot ${toInfo.slotIndex} ${toInfo.slotColor}`);
         return true;
       }
-      return false; // slotIndex または slotColor が undefined の場合
+      return false;
     } else {
       const zone = gameState.zones[zoneId];
       if (zone && typeof cardObject.cardId === "string") {
-        // 重複チェック（デバッグ用）
-        if (zone.includes(cardObject.cardId)) {
-          console.warn(
-            `[addCardToState] Duplicate card detected: ${cardObject.cardId} already exists in ${zoneId}`
-          );
-        }
         zone.push(cardObject.cardId);
         if (zoneId === "volNoise") {
-          shuffle(gameState.zones.volNoise); // VOLノイズ置き場に追加されたらシャッフル
+          shuffle(gameState.zones.volNoise);
         }
-        // console.log(`[addCardToState] Added card ${cardData.cardId} to ${zoneId}`);
         return true;
       }
-      console.warn(
-        `[addCardToState] Failed to add card ${cardData.cardId} to ${zoneId}:`,
-        { zone: !!zone, cardIdType: typeof cardObject.cardId }
-      );
-      return false; // zone が無効、または cardId が文字列でない場合
+      return false;
     }
   }
 
   function handleTap(element, tapInfo) {
-    const currentTime = new Date().getTime();
     const { zoneId, slotIndex, slotColor } = tapInfo;
-    // elementがカードかゾーンかでcardIdの取得方法を変える
     const cardId = element.classList.contains("card")
       ? element.dataset.cardId
       : null;
 
     if (element.classList.contains("pile-zone") && zoneId === "trash") {
-      // トラッシュパイルゾーンがタップされた場合
       const trashExpandedZoneEl = document.getElementById(
         "trash-expanded-zone"
       );
       if (trashExpandedZoneEl.style.display === "flex") {
-        // 表示判定を 'flex' に
         trashExpandedZoneEl.style.display = "none";
       } else {
-        // トラッシュゾーンを開く前にソートする
         if (
           gameState.initialDeckOrder &&
           gameState.initialDeckOrder.length > 0
@@ -844,30 +707,23 @@ document.addEventListener("DOMContentLoaded", () => {
             return indexA - indexB;
           });
         }
-        trashExpandedZoneEl.style.display = "flex"; // 表示を 'flex' に
+        trashExpandedZoneEl.style.display = "flex";
       }
-      renderAll(); // 展開ゾーンのカードを再描画
-      return; // 他のタップ処理は行わない
+      renderAll();
+      return;
     }
-    // 山札パイルゾーンがタップされた場合の処理は既存のまま (カードを引く)
-    // 「山札からサーチ」ボタンの処理は setupEventListeners で個別に行う
-    // 「VOLノイズからサーチ」ボタンの処理は setupEventListeners で個別に行う
-    // 「テンポラリーゾーンを開く」ボタンの処理は setupEventListeners で個別に行う
 
     if (element.classList.contains("pile-zone")) {
       if (zoneId === "deck" && gameState.zones.deck.length > 0) {
-        // テンポラリーゾーンが開いているか確認
         const temporaryExpandedZoneEl = document.getElementById(
           "temporary-expanded-zone"
         );
         if (temporaryExpandedZoneEl.style.display === "flex") {
-          // テンポラリーゾーンにカードを追加
           const topCard = gameState.zones.deck.pop();
           if (topCard) {
             gameState.zones.temporary.push(topCard);
           }
         } else {
-          // 通常通り手札にカードを追加
           gameState.zones.hand.push(gameState.zones.deck.pop());
         }
       } else if (
@@ -875,43 +731,22 @@ document.addEventListener("DOMContentLoaded", () => {
         gameState.zones.volNoise &&
         gameState.zones.volNoise.length > 0
       ) {
-        // VOLノイズゾーンがタップされた場合
         const topCard = gameState.zones.volNoise.pop();
         if (topCard) {
-          // stringのはずだが念のため確認
           gameState.zones.hand.push(topCard);
         }
       }
-      lastTapTime = 0;
-      lastTapTargetCardId = null;
-    } else if (cardId) {
-      // cardId が存在する場合のみ（カードのタップ）
-      if (
-        currentTime - lastTapTime <= DOUBLE_TAP_THRESHOLD &&
-        lastTapTargetCardId === cardId
-      ) {
-        // Double tap detected
-        // console.log('Double tap on card:', cardId);
-        // ここでカード拡大表示などの処理を将来的に追加可能
-        lastTapTime = 0;
-      } else {
-        lastTapTime = currentTime;
-        lastTapTargetCardId = cardId;
-        // シングルタップ時の処理 (スタンバイ切り替えなど)
-        if (zoneId === "direction" || zoneId === "stage") {
-          let slotArray;
-          if (zoneId === "direction")
-            slotArray = gameState.zones.direction[slotIndex];
-          else if (zoneId === "stage")
-            slotArray = gameState.zones.stage[slotIndex][slotColor];
+    } else if (cardId && (zoneId === "direction" || zoneId === "stage")) {
+      let slotArray;
+      if (zoneId === "direction")
+        slotArray = gameState.zones.direction[slotIndex];
+      else if (zoneId === "stage")
+        slotArray = gameState.zones.stage[slotIndex][slotColor];
 
-          if (slotArray && slotArray.length > 0) {
-            const topCard = slotArray[slotArray.length - 1];
-            if (cardId === topCard.cardId) {
-              // タップされたカードがスタックの一番上か確認
-              topCard.isStandby = !topCard.isStandby;
-            }
-          }
+      if (slotArray && slotArray.length > 0) {
+        const topCard = slotArray[slotArray.length - 1];
+        if (cardId === topCard.cardId) {
+          topCard.isStandby = !topCard.isStandby;
         }
       }
     }
@@ -943,7 +778,6 @@ document.addEventListener("DOMContentLoaded", () => {
       !gameState.initialDeckOrder ||
       gameState.initialDeckOrder.length === 0
     ) {
-      console.warn("Initial deck order is not available for sorting.");
       return;
     }
     gameState.zones.hand.sort((cardIdA, cardIdB) => {
@@ -1580,63 +1414,43 @@ document.addEventListener("DOMContentLoaded", () => {
     const expires = new Date();
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
 
-    // GitHub Pages対応のクッキー設定
     let cookieString = `${name}=${value};expires=${expires.toUTCString()}`;
 
-    // HTTPSの場合（GitHub Pages）はSecure属性を追加
     if (location.protocol === "https:") {
       cookieString += ";Secure";
     }
 
-    // SameSite属性を追加（モダンブラウザ対応）
     cookieString += ";SameSite=Lax";
 
-    // パスを設定（GitHub Pagesのサブディレクトリ対応）
     const currentPath = location.pathname;
     const basePath = currentPath.substring(0, currentPath.lastIndexOf("/") + 1);
     cookieString += `;path=${basePath || "/"}`;
 
     document.cookie = cookieString;
-
-    // デバッグ用ログ（GitHub Pages環境での確認用）
-    console.log("Cookie set:", cookieString);
   }
 
   function getCookie(name) {
-    // デバッグ用ログ（GitHub Pages環境での確認用）
-    console.log("Getting cookie:", name);
-    console.log("All cookies:", document.cookie);
-
     const nameEQ = name + "=";
     const ca = document.cookie.split(";");
     for (let i = 0; i < ca.length; i++) {
       let c = ca[i];
       while (c.charAt(0) === " ") c = c.substring(1, c.length);
       if (c.indexOf(nameEQ) === 0) {
-        const value = c.substring(nameEQ.length, c.length);
-        console.log("Cookie found:", name, "=", value);
-        return value;
+        return c.substring(nameEQ.length, c.length);
       }
     }
-    console.log("Cookie not found:", name);
     return null;
   }
 
   function loadBackgroundFromCookie() {
-    console.log("Loading background from cookie...");
     const savedBackground = getCookie("playmat-background");
-    console.log("Saved background value:", savedBackground);
 
     if (savedBackground) {
       if (savedBackground === "none") {
-        console.log("Setting background to none");
         document.body.style.backgroundImage = "";
       } else {
-        console.log("Setting background to:", savedBackground);
         setBackgroundWithCheck(savedBackground);
       }
-    } else {
-      console.log("No saved background found");
     }
   }
 
@@ -1649,31 +1463,24 @@ document.addEventListener("DOMContentLoaded", () => {
     setCookie("deck-single", singleDeck, 30);
     setCookie("deck-p1", dualDeckP1, 30);
     setCookie("deck-p2", dualDeckP2, 30);
-
-    console.log("Deck data saved to cookies");
   }
 
   // クッキーからデッキデータを読み込む関数
   function loadDeckDataFromCookie() {
-    console.log("Loading deck data from cookies...");
-
     const savedSingleDeck = getCookie("deck-single");
     const savedDeckP1 = getCookie("deck-p1");
     const savedDeckP2 = getCookie("deck-p2");
 
     if (savedSingleDeck) {
       document.getElementById("deck-string").value = savedSingleDeck;
-      console.log("Loaded single deck data");
     }
 
     if (savedDeckP1) {
       document.getElementById("deck-string-p1").value = savedDeckP1;
-      console.log("Loaded player 1 deck data");
     }
 
     if (savedDeckP2) {
       document.getElementById("deck-string-p2").value = savedDeckP2;
-      console.log("Loaded player 2 deck data");
     }
   }
 
@@ -1693,17 +1500,12 @@ document.addEventListener("DOMContentLoaded", () => {
         setCookie("deck-p2", "", 30);
         break;
     }
-    console.log(`Cleared deck data for: ${deckType}`);
   }
 
   function changeBackground() {
     const currentBg = document.body.style.backgroundImage;
-    console.log("Current background:", currentBg);
 
-    // 現在の背景状態を判定
     if (!currentBg || currentBg === "" || currentBg === "none") {
-      // 未設定 → wall.png
-      console.log("Changing to wall.png");
       setBackgroundWithCheck("item/wall.png");
       setCookie("playmat-background", "item/wall.png");
     } else if (
@@ -1711,37 +1513,26 @@ document.addEventListener("DOMContentLoaded", () => {
       !currentBg.includes("wall1.png") &&
       !currentBg.includes("wall2.png")
     ) {
-      // wall.png → wall1.png
-      console.log("Changing to wall1.png");
       setBackgroundWithCheck("item/wall1.png");
       setCookie("playmat-background", "item/wall1.png");
     } else if (currentBg.includes("wall1.png")) {
-      // wall1.png → wall2.png
-      console.log("Changing to wall2.png");
       setBackgroundWithCheck("item/wall2.png");
       setCookie("playmat-background", "item/wall2.png");
     } else if (currentBg.includes("wall2.png")) {
-      // wall2.png → 未設定
-      console.log("Changing to none");
       document.body.style.backgroundImage = "";
       setCookie("playmat-background", "none");
     } else {
-      // 不明な状態の場合は未設定に戻す
-      console.log("Unknown state, changing to none");
       document.body.style.backgroundImage = "";
       setCookie("playmat-background", "none");
     }
   }
 
   function setBackgroundWithCheck(imagePath) {
-    // 画像の存在確認
     const img = new Image();
     img.onload = function () {
-      // 画像が正常に読み込めた場合
       document.body.style.backgroundImage = `url('${imagePath}')`;
     };
     img.onerror = function () {
-      // 画像が見つからない場合は未設定に戻す
       console.warn(`Background image not found: ${imagePath}`);
       document.body.style.backgroundImage = "";
       setCookie("playmat-background", "none");
@@ -1770,8 +1561,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function checkAuthentication() {
     const authCookie = getCookie(AUTH_COOKIE_NAME);
     const isAuthenticated = authCookie === "authenticated";
-
-    console.log("Authentication check:", { authCookie, isAuthenticated });
 
     if (isAuthenticated) {
       showDeckInputScreen();
@@ -1993,13 +1782,6 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.remove("fullscreen-mode");
     }
 
-    // デバッグ用ログ（本番では削除可能）
-    console.log(
-      "全画面状態変更:",
-      isFullscreen ? "全画面モード" : "通常モード"
-    );
-
-    // モバイル用ボタンの表示状態を強制更新
     updateMobileFullscreenButton();
   }
   // モバイル用全画面表示ボタンの表示状態を更新
@@ -2008,7 +1790,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const mobileBtn = document.getElementById("fullscreen-mobile-btn");
     const deckInputScreen = document.getElementById("deck-input-screen");
 
-    // ゲーム画面が表示されているかチェック（deck-input-screenが非表示でgame-boardが表示されている）
     const isGameVisible =
       gameBoard &&
       gameBoard.style.display === "flex" &&
@@ -2027,14 +1808,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (mobileBtn) {
       if (isGameVisible && !isFullscreen && isMobile) {
         mobileBtn.style.display = "block";
-        console.log("モバイル全画面ボタンを表示");
       } else {
         mobileBtn.style.display = "none";
-        console.log("モバイル全画面ボタンを非表示:", {
-          isGameVisible,
-          isFullscreen,
-          isMobile,
-        });
       }
     }
   }
@@ -2062,29 +1837,17 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("msfullscreenchange", handleFullscreenChange);
 
   // ウィンドウサイズ変更時にも更新
-  window.addEventListener("resize", updateMobileFullscreenButton); // 初期表示状態を設定
+  window.addEventListener("resize", updateMobileFullscreenButton);
+
   setTimeout(updateMobileFullscreenButton, 100);
-  // クッキーから保存されたプレイマット設定を復元
-  console.log("GitHub Pages Cookie Test - Page loaded");
-  console.log("Current location:", window.location.href);
-  console.log("Current protocol:", window.location.protocol);
-  console.log("Current hostname:", window.location.hostname);
+
   loadBackgroundFromCookie();
-
-  // デッキデータを復元
   loadDeckDataFromCookie();
-
-  // デッキデータを復元
-  loadDeckDataFromCookie(); // パスワード認証システムの初期化
   setupPasswordAuthentication();
-
-  // 認証チェックを実行（認証済みならデッキ選択画面、未認証ならパスワード画面を表示）
   checkAuthentication();
-
-  // Initialize with default deck（認証後にデッキ選択画面で実行される）
-  // 初期化はゲーム開始時に行うため、ここでは空のデッキで初期化
   initGameState([]);
   renderAll();
+
   function switchPlayer() {
     if (!gameState.isDualMode || !gameState.players[2]) return;
 
